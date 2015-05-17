@@ -3,11 +3,14 @@ import 'dart:html';
 import 'dart:async';
 
 class Renderer {
-  static const TICS_PER_SECOND = 30;
-  static const PENDULUMS = 30;
+  static const PENDULUM_SPAN = 0.65;
+  static const TICS_PER_SECOND = 60;
+  static const PENDULUMS = 15;
   static const GRAVITY = 9.8;
   CanvasElement _canvas;
   CanvasRenderingContext2D _context;
+  CanvasElement _vcanvas;
+  CanvasRenderingContext2D _vcontext;
 
   static const START_LENGTH = 0.5;
   static const END_LENGTH = 1.0;
@@ -36,10 +39,14 @@ class Renderer {
     _endLength = end;
     
   }
-  Renderer(CanvasElement canvas) {
+  Renderer(CanvasElement canvas, CanvasElement vcanvas) {
     _canvas = canvas;
     _context = _canvas.context2D;
-    _pendulumLengths = new List<double>(10);
+
+    _vcanvas = vcanvas;
+    _vcontext = _vcanvas.context2D;
+
+    _pendulumLengths = new List<double>(PENDULUMS);
 
     setLengths(0.5,1.0);
     _currentTime = 0.0;
@@ -57,23 +64,54 @@ class Renderer {
     _context.save();
     _context.scale(_canvas.width, _canvas.height);
     _context.clearRect(0, 0, 1, 1);
-    
+
+    _vcontext.save();
+    _vcontext.scale(_vcanvas.width, _vcanvas.height);
+    _vcontext.clearRect(0, 0, 1, 1);
+
     _context.lineWidth = 2/_canvas.width;
     _context.beginPath();
     _context.moveTo(0.5, 0.0);
     _context.lineTo(0.5, 1.0);
     _context.stroke();
-    _context.lineWidth = 0.03;
 
+
+    
+    double maxLength = max(_pendulumLengths.first, _pendulumLengths.last);
     for (int i = 0; i < _pendulumLengths.length; i++) {
       double y = (1 + i) / (_pendulumLengths.length + 2);
       double pendulumLength = _pendulumLengths[i];
-      double theta = _pendulumAngle(_currentTime, pendulumLength, PI/8);
-      double x = (sin(theta)+1.0)/2.0;
+      double theta = _pendulumAngle(_currentTime, pendulumLength, PI/4);
+      double x = PENDULUM_SPAN*sin(theta)*pendulumLength/maxLength+0.5;
+      double vy = PENDULUM_SPAN*cos(theta)*pendulumLength/maxLength;
+      _context.lineWidth = 0.03;
       _context.beginPath();
       _context.arc(x, y, radius, 0, 2 * PI);
       _context.stroke();
+      _context.lineWidth = 1/_canvas.width;
+      _context.beginPath();
+      _context.moveTo(0.5,y+radius/2);
+      _context.lineTo(x, y);
+      _context.stroke();
+      _context.beginPath();
+      _context.moveTo(0.5,y-radius/2);
+      _context.lineTo(x, y);
+      _context.stroke();
+
+      _vcontext.lineWidth = 2/_canvas.width;
+
+      _vcontext.beginPath();
+      _vcontext.moveTo(0.5, 0);
+      _vcontext.lineTo(x, vy);
+       _vcontext.stroke();
+
+      _vcontext.lineWidth = 0.03;
+
+      _vcontext.beginPath();
+      _vcontext.arc(x, vy, radius, 0, 2*PI);
+      _vcontext.stroke();
     }
+    _vcontext.restore();
     _context.restore();
   }
   void loop(Timer timer) {
@@ -89,8 +127,7 @@ class Renderer {
   }
 }
 void main() {
-  CanvasElement selection = querySelector("#screen");
-  Renderer renderer = new Renderer(selection);
+  Renderer renderer = new Renderer( querySelector("#screen"),  querySelector("#vscreen"));
   {
     void changeValue(String elementName, Function valueChanger,
         Function getValue, double defaultValue) {
@@ -116,9 +153,9 @@ void main() {
     }
 
     changeValue("#startLength", (r, v) => r.startLength = v,
-        (r) => r.startLength, 0.5);
+        (r) => r.startLength, 0.21862);
     changeValue("#endLength", (r, v) => r.endLength = v,
-        (r) => r.endLength, 1.0);
+        (r) => r.endLength, 0.34427);
 
   }
   querySelector('#resetButton').onClick.listen((MouseEvent e) {
