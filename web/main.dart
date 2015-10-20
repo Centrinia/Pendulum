@@ -78,7 +78,7 @@ double K(double k) {
 
 class Renderer {
   static const PENDULUM_SPAN = 0.65;
-  static const TICS_PER_SECOND = 50;
+  static const TICS_PER_SECOND = 30;
   static const PENDULUMS = 15;
   static const GRAVITY = 9.80665;
   CanvasElement _canvas;
@@ -105,14 +105,14 @@ class Renderer {
   get endLength => _endLength;
 
   void setLengths(double start, double end) {
-double frequency(double l) {
-  return 2*PI*sqrt(l / GRAVITY);
-}
-double length(double f){
-  double s = f * 2*PI;
-  return GRAVITY / (s*s);
-}
- 
+    double frequency(double l) {
+      return 1 / (2 * PI * sqrt(l / GRAVITY));
+    }
+    double length(double f) {
+      double s = f * 2 * PI;
+      return GRAVITY / (s * s);
+    }
+
     for (int i = 0; i < _pendulumLengths.length; i++) {
       double t = i / (_pendulumLengths.length - 1.0);
       /* T0 = 2*pi*sqrt(l/g) 
@@ -142,11 +142,9 @@ double length(double f){
   static double _pendulumAngle(double t, double l, double theta_0) {
     double omega_0 = sqrt(GRAVITY / l);
     return theta_0 * sin(omega_0 * t);
-    double sine_theta0 = sin(theta_0 / 2);
+    /*double sine_theta0 = sin(theta_0 / 2);
     return 2.0 *
-        asin(sine_theta0 *
-            sn(K(sine_theta0) - omega_0 * t,
-                sine_theta0));
+        asin(sine_theta0 * sn(K(sine_theta0) - omega_0 * t, sine_theta0));*/
   }
 
   void reset() {
